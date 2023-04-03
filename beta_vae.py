@@ -38,8 +38,9 @@ class ConvBetaVAE(ConvVAE):
     
     def training_step(self, batch, batch_idx):
         x, _ = batch
+        input_shape = x.shape[-1]
         x_recon, mu, log_var = self.forward(x)
-        loss = self.loss_function(x_recon, x, mu, log_var)
+        loss = self.loss_function(x_recon, x, mu, log_var, self.hparams.latent_dim/input_shape)
         self.log("train_loss", loss)
         return loss
 
@@ -72,11 +73,11 @@ def train():
     )
     dm.setup()
 
-    BETA = 1
+    BETA = 4
     model = ConvBetaVAE(
         in_channels=1,
         latent_dim=6,
-        encoder_decoder_dims=[32, 64, 128],
+        encoder_decoder_dims=[64, 128, 256, 512, 1024],
         beta=BETA
     )
     # Wandb logger

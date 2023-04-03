@@ -128,7 +128,7 @@ def train():
     wandb.login(key="1a6be1c224ac6e7582f1f314f2409a5d403324a0")
     dm = SpritesDataModule(
         dir="dsprites-dataset",
-        batch_size=128,
+        batch_size=512,
         val_split=0.9,
         transforms=None,
         seed=SEED,
@@ -137,7 +137,7 @@ def train():
     model = ConvVAE(
         in_channels=1,
         latent_dim=6,
-        encoder_decoder_dims=[128, 256, 512, 1024, 2048],
+        encoder_decoder_dims=[64, 128, 256, 512, 1024],
     )
     # Wandb logger
     wandb_logger = pl.loggers.WandbLogger(project="VAE", name=f"ConvVAE_{uuid.uuid4()}")
