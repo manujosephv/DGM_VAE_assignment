@@ -11,7 +11,7 @@ rng = np.random.default_rng(42)
 
 
 class SpritesDataset(Dataset):
-    def __init__(self, imgs, transform=None):
+    def __init__(self, imgs, latents_classes, latents_values, transform=None):
         """
         Args:
             dir (string): Directory containing the dSprites dataset
@@ -19,6 +19,8 @@ class SpritesDataset(Dataset):
                 on a sample.
         """
         self.imgs = imgs
+        self.latents_classes = latents_classes
+        self.latents_values = latents_values
         self.transform = transform
 
     def __len__(self):
@@ -29,7 +31,7 @@ class SpritesDataset(Dataset):
         # sample = sample.reshape(1, sample.shape[0], sample.shape[1])
         if self.transform:
             sample = self.transform(sample)
-        return sample, []
+        return sample, [self.latents_classes[idx], self.latents_values[idx]]
 
 
 # Pytorch Lightning DataModule for Sprites Dataset
@@ -51,8 +53,13 @@ class SpritesDataModule(pl.LightningDataModule):
             dataset_zip = np.load(self.filepath, allow_pickle=True, encoding="bytes")
 
             imgs = dataset_zip["imgs"]
+            latents_classes = dataset_zip["latents_classes"]
+            latents_values = dataset_zip["latents_values"]
             self.dataset = SpritesDataset(
-                imgs, transform=self.transforms.ToTensor() if self.transforms else None
+                imgs,
+                latents_classes,
+                latents_values,
+                transform=self.transforms.ToTensor() if self.transforms else None,
             )
 
             # Create data indices for training and validation splits:
