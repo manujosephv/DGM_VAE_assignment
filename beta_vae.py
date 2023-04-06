@@ -73,7 +73,7 @@ def train():
     )
     dm.setup()
 
-    BETA = 4
+    BETA = 3
     model = ConvBetaVAE(
         in_channels=1,
         latent_dim=6,
