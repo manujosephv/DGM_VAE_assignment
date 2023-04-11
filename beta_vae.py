@@ -4,10 +4,8 @@ import pytorch_lightning as pl
 import torch
 import wandb
 import uuid
-from torch import nn
 
 from datamodule import SpritesDataModule
-from base_vae import BaseVAE, Flatten, UnFlatten
 from simple_vae import ConvVAE
 
 SEED = 42
@@ -31,16 +29,18 @@ class ConvBetaVAE(ConvVAE):
     def loss_function(self, recon_x, x, mu, logvar, m_by_n):
         MSE = (recon_x - x).pow(2).sum()
         KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-        return MSE + self.beta*m_by_n*KLD
+        return MSE + self.beta * m_by_n * KLD
 
     def configure_optimizers(self):
         return torch.optim.AdamW(self.parameters(), lr=1e-3, weight_decay=1e-6)
-    
+
     def training_step(self, batch, batch_idx):
         x, _ = batch
         input_shape = x.shape[-1]
         x_recon, mu, log_var = self.forward(x)
-        loss = self.loss_function(x_recon, x, mu, log_var, self.hparams.latent_dim/input_shape)
+        loss = self.loss_function(
+            x_recon, x, mu, log_var, self.hparams.latent_dim / input_shape
+        )
         self.log("train_loss", loss)
         return loss
 
@@ -48,7 +48,9 @@ class ConvBetaVAE(ConvVAE):
         x, _ = batch
         input_shape = x.shape[-1]
         x_recon, mu, log_var = self.forward(x)
-        loss = self.loss_function(x_recon, x, mu, log_var, self.hparams.latent_dim/input_shape)
+        loss = self.loss_function(
+            x_recon, x, mu, log_var, self.hparams.latent_dim / input_shape
+        )
         self.log("val_loss", loss)
         # Log sample images
         if batch_idx == 0:
@@ -59,7 +61,6 @@ class ConvBetaVAE(ConvVAE):
             # split into list of images
             comparison = [comparison[i] for i in range(comparison.shape[0])]
             self.logger.log_image("reconstruction", comparison)
-
 
 
 def train():
@@ -78,10 +79,12 @@ def train():
         in_channels=1,
         latent_dim=6,
         encoder_decoder_dims=[64, 128, 256, 512, 1024],
-        beta=BETA
+        beta=BETA,
     )
     # Wandb logger
-    wandb_logger = pl.loggers.WandbLogger(project="VAE", name=f"ConvBeta_{BETA}_VAE_{uuid.uuid4()}")
+    wandb_logger = pl.loggers.WandbLogger(
+        project="VAE", name=f"ConvBeta_{BETA}_VAE_{uuid.uuid4()}"
+    )
     es = pl.callbacks.EarlyStopping(monitor="val_loss", patience=5)
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         monitor="val_loss",
